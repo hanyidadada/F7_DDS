@@ -1,0 +1,29 @@
+{
+    "files.associations": {
+        "*.in": "cpp",
+        "freertos.h": "c",
+        "uxr_transport.h": "c",
+        "transport.h": "c",
+        "custom_transport.h": "c",
+        "stream_framing_protocol.h": "c",
+        "multithread.h": "c",
+        "config.h": "c",
+        "visibility.h": "c",
+        "rtc.h": "c",
+        "main.h": "c",
+        "stm32f7xx_hal.h": "c",
+        "unistd.h": "c",
+        "stdbool.h": "c",
+        "helloworld.h": "c",
+        "usart.h": "c",
+        "client.h": "c",
+        "can_transport_posix.h": "c",
+        "can_transport.h": "c",
+        "serial_transport.h": "c",
+        "serial_transport_posix.h": "c",
+        "tcp_transport.h": "c",
+        "communication.h": "c",
+        "bitset": "c",
+        "algorithm": "c"
+    }
+}
