@@ -36,7 +36,6 @@
      PE4   ------> SAI1_FS_A
      PE3   ------> SAI1_SD_B
      PE2   ------> QUADSPI_BK1_IO2
-     PG14   ------> ETH_TXD1
      PE1   ------> FMC_NBL1
      PE0   ------> FMC_NBL0
      PB8   ------> I2C1_SCL
@@ -47,12 +46,10 @@
      PA15   ------> CEC
      PE5   ------> SAI1_SCK_A
      PE6   ------> SAI1_SD_A
-     PG13   ------> ETH_TXD0
      PB9   ------> I2C1_SDA
      PB7   ------> I2C4_SDA
      PB6   ------> QUADSPI_BK1_NCS
      PG15   ------> FMC_SDNCAS
-     PG11   ------> ETH_TX_EN
      PD6   ------> SDMMC2_CK
      PD0   ------> FMC_D2_DA2
      PC11   ------> S_DATAIN5DFSDM1
@@ -95,7 +92,6 @@
      PF7   ------> S_TIM11_CH1
      PF6   ------> S_TIM10_CH1
      PF5   ------> FMC_A5
-     PH2   ------> FMC_SDCKE0
      PD15   ------> FMC_D1_DA1
      PD10   ------> FMC_D15_DA15
      PF10   ------> ADC3_IN8
@@ -105,7 +101,6 @@
      PD14   ------> FMC_D0_DA0
      PD9   ------> FMC_D14_DA14
      PD8   ------> FMC_D13_DA13
-     PC1   ------> ETH_MDC
      PC2   ------> ADCx_IN12
      PB2   ------> QUADSPI_CLK
      PF12   ------> FMC_A6
@@ -115,9 +110,7 @@
      PD13   ------> QUADSPI_BK1_IO3
      PG2   ------> FMC_A12
      PH12   ------> FMC_D20
-     PA1   ------> ETH_REF_CLK
      PA4   ------> ADCx_IN4
-     PC4   ------> ETH_RXD0
      PF13   ------> FMC_A7
      PG0   ------> FMC_A10
      PE8   ------> FMC_D5_DA5
@@ -126,9 +119,7 @@
      PG4   ------> FMC_A14_BA0
      PH9   ------> FMC_D17
      PH11   ------> FMC_D19
-     PA2   ------> ETH_MDIO
      PA6   ------> ADCx_IN6
-     PC5   ------> ETH_RXD1
      PF14   ------> FMC_A8
      PJ2   ------> DSIHOST_TE
      PF11   ------> FMC_SDNRAS
@@ -138,7 +129,6 @@
      PH6   ------> S_TIM12_CH1
      PH8   ------> FMC_D16
      PH10   ------> FMC_D18
-     PA7   ------> ETH_CRS_DV
      PE7   ------> FMC_D4_DA4
      PE10   ------> FMC_D7_DA7
      PE12   ------> FMC_D9_DA9
@@ -183,14 +173,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
   HAL_GPIO_Init(QSPI_D2_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PGPin PGPin PGPin */
-  GPIO_InitStruct.Pin = RMII_TXD1_Pin|RMII_TXD0_Pin|RMII_TX_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PEPin PEPin PEPin PEPin
                            PEPin PEPin PEPin PEPin
@@ -405,10 +387,10 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PHPin PHPin PHPin PHPin
                            PHPin PHPin PHPin PHPin
-                           PHPin PHPin PHPin */
+                           PHPin PHPin */
   GPIO_InitStruct.Pin = D23_Pin|D21_Pin|D22_Pin|FMC_SDNME_Pin
-                          |FMC_SDNE0_Pin|FMC_SDCKE0_Pin|D20_Pin|FMC_D_7_Pin
-                          |FMC_D19_Pin|FMC_D16_Pin|FMC_D18_Pin;
+                          |FMC_SDNE0_Pin|D20_Pin|FMC_D_7_Pin|FMC_D19_Pin
+                          |FMC_D16_Pin|FMC_D18_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -481,14 +463,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PCPin PCPin PCPin */
-  GPIO_InitStruct.Pin = RMII_MDC_Pin|RMII_RXD0_Pin|RMII_RXD1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = ARD_A2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -518,14 +492,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
   HAL_GPIO_Init(QSPI_D3_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PAPin PAPin PAPin */
-  GPIO_InitStruct.Pin = RMII_REF_CLK_Pin|RMII_MDIO_Pin|RMII_CRS_DV_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = B_USER_Pin;

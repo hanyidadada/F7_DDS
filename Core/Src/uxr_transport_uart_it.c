@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#if 1
+#ifdef RMW_UXRCE_TRANSPORT_CUSTOM_SERIAL_IT
 
 // --- micro-ROS Transports ---
 #define UART_IT_BUFFER_SIZE 2048
@@ -75,7 +75,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     it_tail++;
 
     HAL_UART_Receive_IT(huart, &it_data, 1);
-    // HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+    HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
 }
 
 #endif

@@ -9,7 +9,7 @@
 #define USB_BUFFER_SIZE 4096
 #define WRITE_TIMEOUT_MS 100U
 
-#if 0
+#ifdef RMW_UXRCE_TRANSPORT_CUSTOM_USB
 
 // Line coding: Rate: 8MBits/s; CharFormat: 1 Stop bit; Parity: None; Data: 8 bits
 static uint8_t line_coding[7] = {0x00, 0x12, 0x7A, 0x00, 0x00, 0x00, 0x08};

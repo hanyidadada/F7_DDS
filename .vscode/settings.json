@@ -24,6 +24,7 @@
         "tcp_transport.h": "c",
         "communication.h": "c",
         "bitset": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "cmsis_os.h": "c"
     }
 }

@@ -235,8 +235,6 @@ void Error_Handler(void);
 #define ARD_D3_PWM_GPIO_Port GPIOF
 #define FMC_A5_Pin GPIO_PIN_5
 #define FMC_A5_GPIO_Port GPIOF
-#define FMC_SDCKE0_Pin GPIO_PIN_2
-#define FMC_SDCKE0_GPIO_Port GPIOH
 #define FMC_D1_Pin GPIO_PIN_15
 #define FMC_D1_GPIO_Port GPIOD
 #define ULPI_D6_Pin GPIO_PIN_13

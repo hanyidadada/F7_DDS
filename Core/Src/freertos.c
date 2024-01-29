@@ -97,6 +97,7 @@ const osThreadAttr_t defaultTask_attributes = {
 void StartDefaultTask(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
+extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -150,6 +151,9 @@ void StartDefaultTask(void *argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
+
+  /* init code for LWIP */
+  MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
   //  printf("Hardware initialize OK.\r\n");
     uxrCustomTransport transport;
@@ -230,7 +234,8 @@ void StartDefaultTask(void *argument)
         uxr_prepare_output_stream(&session, reliable_out, datawriter_id, &ub, topic_size);
         HelloWorld_serialize_topic(&ub, &topic);
 
-        printf("Send topic: %s, id: %li\n", topic.message, topic.index);
+        // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
+        HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
         uxr_run_session_time(&session, 1000);
     }
     // Delete resources

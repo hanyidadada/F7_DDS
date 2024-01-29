@@ -11,6 +11,12 @@
 #include "uxr/client/transport.h"
 #include "uxr/client/client.h"
 
+#define RMW_UXRCE_TRANSPORT_CUSTOM_SERIAL_DMA
+
+// #define RMW_UXRCE_TRANSPORT_CUSTOM_SERIAL_IT
+
+// #define RMW_UXRCE_TRANSPORT_CUSTOM_USB
+
 bool my_custom_transport_open(struct uxrCustomTransport * transport);
 bool my_custom_transport_close(struct uxrCustomTransport * transport);
 size_t my_custom_transport_write(struct uxrCustomTransport* transport, uint8_t * buf, size_t len, uint8_t * err);
