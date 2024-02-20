@@ -25,6 +25,24 @@
         "communication.h": "c",
         "bitset": "c",
         "algorithm": "c",
-        "cmsis_os.h": "c"
+        "cmsis_os.h": "c",
+        "sessions.h": "c",
+        "typeinfo": "c",
+        "stdio.h": "c",
+        "task.h": "c",
+        "stm32f7xx_hal_tim.h": "c",
+        "tcp_transport_internal.h": "c",
+        "opt.h": "c",
+        "types.h": "c",
+        "sockets.h": "c",
+        "socket.h": "c",
+        "tcp_transport_posix_nopoll.h": "c",
+        "time.h": "c",
+        "errno.h": "c",
+        "netdb.h": "c",
+        "lwipopts.h": "c",
+        "inet.h": "c",
+        "string.h": "c",
+        "microcdr.h": "c"
     }
 }
