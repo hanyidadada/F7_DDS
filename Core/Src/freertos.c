@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * File Name          : freertos.c
-  * Description        : Code for freertos applications
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : freertos.c
+ * Description        : Code for freertos applications
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2024 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -25,17 +25,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <time.h>
-#include <uxr_transport.h>
-#include "uxr/client/transport.h"
-#include "uxr/client/client.h"
-#include "HelloWorld.h"
+#include "sessions.h"
 #include "usart.h"
+#include "HelloWorld.h"
+#include <stdio.h>
+
+
+#include <uxr/client/client.h>
+#include <ucdr/microcdr.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,8 +42,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define STREAM_HISTORY  4
-#define BUFFER_SIZE     UXR_CONFIG_CUSTOM_TRANSPORT_MTU*STREAM_HISTORY
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,41 +52,33 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-uint8_t output_reliable_stream_buffer[BUFFER_SIZE];
-uint8_t input_reliable_stream_buffer[BUFFER_SIZE];
-const char* participant_xml = "<dds>"
-        "<participant>"
-        "<rtps>"
-        "<name>default_xrce_participant</name>"
-        "</rtps>"
-        "</participant>"
-        "</dds>";
-const char* topic_xml = "<dds>"
-        "<topic>"
-        "<name>HelloWorldTopic</name>"
-        "<dataType>HelloWorld</dataType>"
-        "</topic>"
-        "</dds>";
-const char* datawriter_xml = "<dds>"
-        "<data_writer>"
-        "<topic>"
-        "<kind>NO_KEY</kind>"
-        "<name>HelloWorldTopic</name>"
-        "<dataType>HelloWorld</dataType>"
-        "</topic>"
-        "</data_writer>"
-        "</dds>";
+osThreadId_t uartSessionTaskHandle;
+const osThreadAttr_t uartSessionTask_attributes = {
+    .name = "uartSessionTask",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t)osPriorityHigh,
+};
+osThreadId_t tcpSessionTaskHandle;
+const osThreadAttr_t tcpSessionTask_attributes = {
+    .name = "tcpSessionTask",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t)osPriorityHigh,
+};
+
+osSemaphoreId_t semaphoreHandle;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 1024 * 4,
+  .stack_size = 216 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void uartSessionTask(void *argument);
+void tcpSessionTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -116,6 +104,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  semaphoreHandle = osSemaphoreNew(2, 0, NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -132,6 +121,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  // uartSessionTaskHandle = osThreadNew(uartSessionTask, NULL, &defaultTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -142,10 +132,10 @@ void MX_FREERTOS_Init(void) {
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the defaultTask thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
@@ -155,47 +145,55 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
-  //  printf("Hardware initialize OK.\r\n");
-    uxrCustomTransport transport;
+  // printf("Hardware initialize OK.\r\n");
+  char* ip = "192.168.2.102";
+    char* port = "8888";
+    uint32_t max_topics = 15;
 
-    uxr_set_custom_transport_callbacks(
-        &transport,
-        true,
-        my_custom_transport_open,
-        my_custom_transport_close,
-        my_custom_transport_write,
-        my_custom_transport_read);
-
-    if (!uxr_init_custom_transport(&transport, &huart1))
+    // Transport
+    uxrUDPTransport transport;
+    if (!uxr_init_udp_transport(&transport, UXR_IPv4, ip, port))
     {
-  	    while(1);
+        printf("Error at create transport.\n");
+        return 1;
     }
 
+    // Session
     uxrSession session;
     uxr_init_session(&session, &transport.comm, 0xAAAABBBB);
     if (!uxr_create_session(&session))
     {
-        printf("open session error!\n");
-  	    while(1) {
-  	    	vTaskDelay(100);
-  	    }
+        printf("Error at create session.\n");
+        return 1;
     }
-    // Streams
 
+    // Streams
+    uint8_t output_reliable_stream_buffer[BUFFER_SIZE];
     uxrStreamId reliable_out = uxr_create_output_reliable_stream(&session, output_reliable_stream_buffer, BUFFER_SIZE,
                     STREAM_HISTORY);
 
-
+    uint8_t input_reliable_stream_buffer[BUFFER_SIZE];
     uxr_create_input_reliable_stream(&session, input_reliable_stream_buffer, BUFFER_SIZE, STREAM_HISTORY);
 
     // Create entities
     uxrObjectId participant_id = uxr_object_id(0x01, UXR_PARTICIPANT_ID);
-
+    const char* participant_xml = "<dds>"
+            "<participant>"
+            "<rtps>"
+            "<name>default_xrce_participant</name>"
+            "</rtps>"
+            "</participant>"
+            "</dds>";
     uint16_t participant_req = uxr_buffer_create_participant_xml(&session, reliable_out, participant_id, 0,
                     participant_xml, UXR_REPLACE);
 
     uxrObjectId topic_id = uxr_object_id(0x01, UXR_TOPIC_ID);
-
+    const char* topic_xml = "<dds>"
+            "<topic>"
+            "<name>HelloWorldTopic</name>"
+            "<dataType>HelloWorld</dataType>"
+            "</topic>"
+            "</dds>";
     uint16_t topic_req = uxr_buffer_create_topic_xml(&session, reliable_out, topic_id, participant_id, topic_xml,
                     UXR_REPLACE);
 
@@ -205,7 +203,15 @@ void StartDefaultTask(void *argument)
                     publisher_xml, UXR_REPLACE);
 
     uxrObjectId datawriter_id = uxr_object_id(0x01, UXR_DATAWRITER_ID);
-
+    const char* datawriter_xml = "<dds>"
+            "<data_writer>"
+            "<topic>"
+            "<kind>NO_KEY</kind>"
+            "<name>HelloWorldTopic</name>"
+            "<dataType>HelloWorld</dataType>"
+            "</topic>"
+            "</data_writer>"
+            "</dds>";
     uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&session, reliable_out, datawriter_id, publisher_id,
                     datawriter_xml, UXR_REPLACE);
 
@@ -216,14 +222,15 @@ void StartDefaultTask(void *argument)
     };
     if (!uxr_run_session_until_all_status(&session, 1000, requests, status, 4))
     {
-        printf("Error at create entities: participant: %i topic: %i publisher: %i darawriter: %i\n", status[0],
+        printf("Error at create entities: participant: %i topic: %i publisher: %i datawriter: %i\n", status[0],
                 status[1], status[2], status[3]);
+        return 1;
     }
 
     // Write topics
+    bool connected = true;
     uint32_t count = 0;
-    /* Infinite loop */
-    for(;;)
+    while (connected && count < max_topics)
     {
         HelloWorld topic = {
             ++count, "Hello DDS world!"
@@ -234,18 +241,61 @@ void StartDefaultTask(void *argument)
         uxr_prepare_output_stream(&session, reliable_out, datawriter_id, &ub, topic_size);
         HelloWorld_serialize_topic(&ub, &topic);
 
-        // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
-        HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
-        uxr_run_session_time(&session, 1000);
+        printf("Send topic: %s, id: %i\n", topic.message, topic.index);
+        connected = uxr_run_session_time(&session, 1000);
     }
+
     // Delete resources
     uxr_delete_session(&session);
-    uxr_close_custom_transport(&transport);
+    uxr_close_udp_transport(&transport);
+  // osSemaphoreRelease(semaphoreHandle);
+  // // uartSessionTask(NULL);
+  // osSemaphoreRelease(semaphoreHandle);
   /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void uartSessionTask(void *argument)
+{
+  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
+  // osThreadTerminate(defaultTaskHandle);
+  session_info_t info;
+  printf("Starting session...\r\n");
+  if (!usart_session_open(&info, huart1))
+  {
+    printf("usart session open error!");
+  }
+  printf("Session started.\r\n");
+  // Write topics
+  uint32_t count = 0;
+  /* Infinite loop */
+  for (;;)
+  {
+    HelloWorld topic = {
+        ++count, "Hello DDS world!"};
 
+    ucdrBuffer ub;
+    uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
+    uxr_prepare_output_stream(&(info.session), info.reliable_out, info.datawriter_id, &ub, topic_size);
+    HelloWorld_serialize_topic(&ub, &topic);
+
+    // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
+    HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+    uxr_run_session_time(&(info.session), 1000);
+  }
+  // Delete resources
+  uxr_delete_session(&(info.session));
+  uxr_close_custom_transport(&(info.transport));
+}
+
+void tcpSessionTask(void *argument)
+{
+  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
+  while (1)
+  {
+    /* code */
+  }
+}
 /* USER CODE END Application */
 

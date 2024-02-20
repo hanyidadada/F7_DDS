@@ -167,7 +167,7 @@ void uxr_init_session(
     session->on_time_args = NULL;
     session->time_offset = 0;
     session->synchronized = false;
-
+    
     uxr_init_session_info(&session->info, 0x81, key);
     uxr_init_stream_storage(&session->streams);
 }
