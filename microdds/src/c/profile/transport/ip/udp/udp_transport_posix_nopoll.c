@@ -101,8 +101,9 @@ size_t uxr_read_udp_data_platform(
     struct timeval tv;
     tv.tv_sec = timeout / 1000;
     tv.tv_usec = (timeout % 1000) * 1000;
-
-    if (0 != setsockopt(platform->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)))
+    // printf("timeout:%d tv_sec:%d tv_usec:%d\n", timeout, tv.tv_sec, tv.tv_usec);
+    int ret = setsockopt(platform->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    if (0 != ret)
     {
         *errcode = 1;
         return 0;

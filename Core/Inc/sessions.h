@@ -4,8 +4,8 @@
 #include "uxr/client/transport.h"
 #include "uxr/client/client.h"
 
-#define STREAM_HISTORY  4
-#define BUFFER_SIZE     UXR_CONFIG_CUSTOM_TRANSPORT_MTU*STREAM_HISTORY
+#define STREAM_HISTORY  2
+#define BUFFER_SIZE     UXR_CONFIG_UDP_TRANSPORT_MTU*STREAM_HISTORY
 
 typedef struct session_info{
     uxrSession session;
