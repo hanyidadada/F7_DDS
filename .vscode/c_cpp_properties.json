@@ -14,10 +14,10 @@
                 "USE_HAL_DRIVER",
                 "STM32F103xE"
             ],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "/opt/arm-gnu-toolchain/bin/arm-none-eabi-gcc",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-gcc-arm"
         }
     ],
     "version": 4

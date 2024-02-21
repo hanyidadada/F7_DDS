@@ -43,6 +43,16 @@
         "lwipopts.h": "c",
         "inet.h": "c",
         "string.h": "c",
-        "microcdr.h": "c"
-    }
+        "microcdr.h": "c",
+        "atomic": "c",
+        "*.tcc": "c",
+        "cstdint": "c",
+        "random": "c",
+        "ethernetif.h": "c",
+        "netif.h": "c",
+        "dhcp.h": "c",
+        "etharp.h": "c",
+        "mem.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
