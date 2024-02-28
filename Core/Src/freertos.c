@@ -143,6 +143,49 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
+  // osSemaphoreRelease(semaphoreHandle);
+  uartSessionTask(NULL);
+  // osSemaphoreRelease(semaphoreHandle);
+  /* USER CODE END StartDefaultTask */
+}
+
+/* Private application code --------------------------------------------------*/
+/* USER CODE BEGIN Application */
+void uartSessionTask(void *argument)
+{
+  // osSemaphoreAcquire(semaphoreHandle, osWaitForever);
+  // osThreadTerminate(defaultTaskHandle);
+  session_info_t info;
+  if (usart_session_open(&info, huart1) < 0)
+  {
+    printf("usart session open error!");
+    HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+  }
+  // Write topics
+  uint32_t count = 0;
+  /* Infinite loop */
+  while (count < 20)
+  {
+    HelloWorld topic = {
+        ++count, "Hello DDS world!"};
+
+    ucdrBuffer ub;
+    uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
+    uxr_prepare_output_stream(&(info.session), info.reliable_out, info.datawriter_id, &ub, topic_size);
+    HelloWorld_serialize_topic(&ub, &topic);
+
+    // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
+    // HAL_GPIO_TogglePin(LD_USER2_GPIO_Port, LD_USER2_Pin);
+    uxr_run_session_time(&(info.session), 1000);
+  }
+  // Delete resources
+  uxr_delete_session(&(info.session));
+  uxr_close_custom_transport(&(info.transport));
+}
+
+void tcpSessionTask(void *argument)
+{
+  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
   char* ip = "10.2.25.94";
   char* port = "1234";
   uint32_t max_topics = 15;
@@ -236,66 +279,13 @@ void StartDefaultTask(void *argument)
       uxr_prepare_output_stream(&session, reliable_out, datawriter_id, &ub, topic_size);
       HelloWorld_serialize_topic(&ub, &topic);
 
-      printf("Send topic: %s, id: %i\n", topic.message, topic.index);
+      printf("Send topic: %s, id: %li\n", topic.message, topic.index);
       connected = uxr_run_session_time(&session, 1000);
   }
 
   // Delete resources
   uxr_delete_session(&session);
   uxr_close_udp_transport(&transport);
-  while (1)
-  {
-    /* code */
-  }
-  
-  // osSemaphoreRelease(semaphoreHandle);
-  // // uartSessionTask(NULL);
-  // osSemaphoreRelease(semaphoreHandle);
-  /* USER CODE END StartDefaultTask */
-}
-
-/* Private application code --------------------------------------------------*/
-/* USER CODE BEGIN Application */
-void uartSessionTask(void *argument)
-{
-  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
-  // osThreadTerminate(defaultTaskHandle);
-  session_info_t info;
-  printf("Starting session...\r\n");
-  if (!usart_session_open(&info, huart1))
-  {
-    printf("usart session open error!");
-  }
-  printf("Session started.\r\n");
-  // Write topics
-  uint32_t count = 0;
-  /* Infinite loop */
-  for (;;)
-  {
-    HelloWorld topic = {
-        ++count, "Hello DDS world!"};
-
-    ucdrBuffer ub;
-    uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
-    uxr_prepare_output_stream(&(info.session), info.reliable_out, info.datawriter_id, &ub, topic_size);
-    HelloWorld_serialize_topic(&ub, &topic);
-
-    // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
-    HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
-    uxr_run_session_time(&(info.session), 1000);
-  }
-  // Delete resources
-  uxr_delete_session(&(info.session));
-  uxr_close_custom_transport(&(info.transport));
-}
-
-void tcpSessionTask(void *argument)
-{
-  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
-  while (1)
-  {
-    /* code */
-  }
 }
 /* USER CODE END Application */
 

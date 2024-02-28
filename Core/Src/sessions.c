@@ -48,7 +48,7 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
         printf("transport error!\n");
         return -1;
     }
-    uxr_init_session(&(info->session), &(info->transport.comm), 0xAAAABBBB);
+    uxr_init_session(&(info->session), &(info->transport.comm), 0xAAAABBCC);
     if (!uxr_create_session(&(info->session)))
     {
         printf("open session error!\n");
@@ -65,23 +65,19 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
     // Create entities
     uxrObjectId participant_id = uxr_object_id(0x01, UXR_PARTICIPANT_ID);
 
-    uint16_t participant_req = uxr_buffer_create_participant_xml(&(info->session), info->reliable_out, participant_id, 0,
-                    participant_xml, UXR_REPLACE);
+    uint16_t participant_req = uxr_buffer_create_participant_xml(&(info->session), info->reliable_out, participant_id, 0, participant_xml, UXR_REPLACE);
 
     uxrObjectId topic_id = uxr_object_id(0x01, UXR_TOPIC_ID);
 
-    uint16_t topic_req = uxr_buffer_create_topic_xml(&(info->session), info->reliable_out, topic_id, participant_id, topic_xml,
-                    UXR_REPLACE);
+    uint16_t topic_req = uxr_buffer_create_topic_xml(&(info->session), info->reliable_out, topic_id, participant_id, topic_xml, UXR_REPLACE);
 
     uxrObjectId publisher_id = uxr_object_id(0x01, UXR_PUBLISHER_ID);
     const char* publisher_xml = "";
-    uint16_t publisher_req = uxr_buffer_create_publisher_xml(&(info->session), info->reliable_out, publisher_id, participant_id,
-                    publisher_xml, UXR_REPLACE);
+    uint16_t publisher_req = uxr_buffer_create_publisher_xml(&(info->session), info->reliable_out, publisher_id, participant_id, publisher_xml, UXR_REPLACE);
 
     info->datawriter_id = uxr_object_id(0x01, UXR_DATAWRITER_ID);
 
-    uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&(info->session), info->reliable_out, info->datawriter_id, publisher_id,
-                    datawriter_xml, UXR_REPLACE);
+    uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&(info->session), info->reliable_out, info->datawriter_id, publisher_id, datawriter_xml, UXR_REPLACE);
 
     // Send create entities message and wait its status
     uint8_t status[4];
@@ -95,25 +91,4 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
         return -1;
     }
     return 0;
-    // Write topics
-    // uint32_t count = 0;
-    // /* Infinite loop */
-    // for(;;)
-    // {
-    //     HelloWorld topic = {
-    //         ++count, "Hello DDS world!"
-    //     };
-
-    //     ucdrBuffer ub;
-    //     uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
-    //     uxr_prepare_output_stream(&session, reliable_out, datawriter_id, &ub, topic_size);
-    //     HelloWorld_serialize_topic(&ub, &topic);
-
-    //     // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
-    //     HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
-    //     uxr_run_session_time(&session, 1000);
-    // }
-    // Delete resources
-    // uxr_delete_session(&session);
-    // uxr_close_custom_transport(&transport);
 }
