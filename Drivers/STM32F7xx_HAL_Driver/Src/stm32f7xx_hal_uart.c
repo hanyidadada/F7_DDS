@@ -1142,7 +1142,7 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, const uint8_t *pD
         huart->Instance->TDR = (uint8_t)(*pdata8bits & 0xFFU);
         pdata8bits++;
       }
-      huart->TxXferCount--;
+      // huart->TxXferCount--;
     }
 
     if (UART_WaitOnFlagUntilTimeout(huart, UART_FLAG_TC, RESET, tickstart, Timeout) != HAL_OK)
