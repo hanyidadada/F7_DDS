@@ -8,8 +8,8 @@
 #include "lwip/dhcp.h"
 #include "sessions.h"
 
-uint8_t output_reliable_stream_buffer[BUFFER_SIZE];
-uint8_t input_reliable_stream_buffer[BUFFER_SIZE];
+uint8_t serial_output_reliable_stream_buffer[BUFFER_SIZE];
+uint8_t serial_input_reliable_stream_buffer[BUFFER_SIZE];
 const char* participant_xml = "<dds>"
         "<participant>"
         "<rtps>"
@@ -39,10 +39,10 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
     uxr_set_custom_transport_callbacks(
       &(info->transport),
       true,
-      my_custom_transport_open,
-      my_custom_transport_close,
-      my_custom_transport_write,
-      my_custom_transport_read);
+      serial_transport_open,
+      serial_transport_close,
+      serial_transport_write,
+      serial_transport_read);
     if (!uxr_init_custom_transport(&(info->transport), &huart))
     {
         printf("transport error!\n");
@@ -56,28 +56,28 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
     }
     // Streams
 
-    info->reliable_out = uxr_create_output_reliable_stream(&(info->session), output_reliable_stream_buffer, BUFFER_SIZE,
+    info->reliable_out = uxr_create_output_reliable_stream(&(info->session), serial_output_reliable_stream_buffer, BUFFER_SIZE,
                     STREAM_HISTORY);
 
 
-    uxr_create_input_reliable_stream(&(info->session), input_reliable_stream_buffer, BUFFER_SIZE, STREAM_HISTORY);
+    info->reliable_in = uxr_create_input_reliable_stream(&(info->session), serial_input_reliable_stream_buffer, BUFFER_SIZE, STREAM_HISTORY);
 
     // Create entities
-    uxrObjectId participant_id = uxr_object_id(0x01, UXR_PARTICIPANT_ID);
+    info->participant_id = uxr_object_id(0x01, UXR_PARTICIPANT_ID);
 
-    uint16_t participant_req = uxr_buffer_create_participant_xml(&(info->session), info->reliable_out, participant_id, 0, participant_xml, UXR_REPLACE);
+    uint16_t participant_req = uxr_buffer_create_participant_xml(&(info->session), info->reliable_out, info->participant_id, 0, participant_xml, UXR_REPLACE);
 
-    uxrObjectId topic_id = uxr_object_id(0x01, UXR_TOPIC_ID);
+    info->topic_id = uxr_object_id(0x01, UXR_TOPIC_ID);
 
-    uint16_t topic_req = uxr_buffer_create_topic_xml(&(info->session), info->reliable_out, topic_id, participant_id, topic_xml, UXR_REPLACE);
+    uint16_t topic_req = uxr_buffer_create_topic_xml(&(info->session), info->reliable_out, info->topic_id, info->participant_id, topic_xml, UXR_REPLACE);
 
-    uxrObjectId publisher_id = uxr_object_id(0x01, UXR_PUBLISHER_ID);
+    info->publisher_id = uxr_object_id(0x01, UXR_PUBLISHER_ID);
     const char* publisher_xml = "";
-    uint16_t publisher_req = uxr_buffer_create_publisher_xml(&(info->session), info->reliable_out, publisher_id, participant_id, publisher_xml, UXR_REPLACE);
+    uint16_t publisher_req = uxr_buffer_create_publisher_xml(&(info->session), info->reliable_out, info->publisher_id, info->participant_id, publisher_xml, UXR_REPLACE);
 
     info->datawriter_id = uxr_object_id(0x01, UXR_DATAWRITER_ID);
 
-    uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&(info->session), info->reliable_out, info->datawriter_id, publisher_id, datawriter_xml, UXR_REPLACE);
+    uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&(info->session), info->reliable_out, info->datawriter_id, info->publisher_id, datawriter_xml, UXR_REPLACE);
 
     // Send create entities message and wait its status
     uint8_t status[4];

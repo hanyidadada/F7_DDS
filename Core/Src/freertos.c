@@ -34,6 +34,7 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -50,33 +51,48 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-// osThreadId_t uartSessionTaskHandle;
-// const osThreadAttr_t uartSessionTask_attributes = {
-//     .name = "uartSessionTask",
-//     .stack_size = 1024 * 4,
-//     .priority = (osPriority_t)osPriorityHigh,
-// };
-// osThreadId_t tcpSessionTaskHandle;
-// const osThreadAttr_t tcpSessionTask_attributes = {
-//     .name = "tcpSessionTask",
-//     .stack_size = 1024 * 4,
-//     .priority = (osPriority_t)osPriorityHigh,
-// };
+osThreadId_t uartSessionTaskHandle;
+uint32_t uartTaskBuffer[ 2048 ];
+osStaticThreadDef_t uartTaskControlBlock;
+const osThreadAttr_t uartSessionTask_attributes = {
+    .name = "uartSessionTask",
+    .priority = (osPriority_t)osPriorityHigh,
+    .cb_mem = &uartTaskControlBlock,
+    .cb_size = sizeof(uartTaskControlBlock),
+    .stack_mem = &uartTaskBuffer[0],
+    .stack_size = sizeof(uartTaskBuffer),
+};
+osThreadId_t udpSessionTaskHandle;
+uint32_t udpTaskBuffer[ 2048 ];
+osStaticThreadDef_t udpTaskControlBlock;
+const osThreadAttr_t udpSessionTask_attributes = {
+    .name = "udpSessionTask",
+    .priority = (osPriority_t)osPriorityHigh,
+    .cb_mem = &udpTaskControlBlock,
+    .cb_size = sizeof(udpTaskControlBlock),
+    .stack_mem = &udpTaskBuffer[0],
+    .stack_size = sizeof(udpTaskBuffer),
+};
 
 osSemaphoreId_t semaphoreHandle;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 256 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 2048 * 4,
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void uartSessionTask(void *argument);
-void tcpSessionTask(void *argument);
+void udpSessionTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -119,7 +135,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  // uartSessionTaskHandle = osThreadNew(uartSessionTask, NULL, &defaultTask_attributes);
+  uartSessionTaskHandle = osThreadNew(uartSessionTask, NULL, &uartSessionTask_attributes);
+  // udpSessionTaskHandle = osThreadNew(udpSessionTask, NULL, &udpSessionTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -143,9 +160,14 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
-  // osSemaphoreRelease(semaphoreHandle);
-  uartSessionTask(NULL);
-  // osSemaphoreRelease(semaphoreHandle);
+  osSemaphoreRelease(semaphoreHandle);
+  // uartSessionTask(NULL);
+  osSemaphoreRelease(semaphoreHandle);
+  while (1)
+  {
+    osDelay(100000);
+  }
+  
   /* USER CODE END StartDefaultTask */
 }
 
@@ -153,7 +175,7 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 void uartSessionTask(void *argument)
 {
-  // osSemaphoreAcquire(semaphoreHandle, osWaitForever);
+  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
   // osThreadTerminate(defaultTaskHandle);
   session_info_t info;
   if (usart_session_open(&info, huart1) < 0)
@@ -161,6 +183,7 @@ void uartSessionTask(void *argument)
     printf("usart session open error!");
     HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
   }
+  osDelay(1000);
   // Write topics
   uint32_t count = 0;
   /* Infinite loop */
@@ -173,20 +196,19 @@ void uartSessionTask(void *argument)
     uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
     uxr_prepare_output_stream(&(info.session), info.reliable_out, info.datawriter_id, &ub, topic_size);
     HelloWorld_serialize_topic(&ub, &topic);
-
-    // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
-    // HAL_GPIO_TogglePin(LD_USER2_GPIO_Port, LD_USER2_Pin);
-    uxr_run_session_time(&(info.session), 1000);
+    if(!uxr_run_session_time(&(info.session), 1000)){
+      HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+    }
   }
   // Delete resources
   uxr_delete_session(&(info.session));
   uxr_close_custom_transport(&(info.transport));
 }
 
-void tcpSessionTask(void *argument)
+void udpSessionTask(void *argument)
 {
   osSemaphoreAcquire(semaphoreHandle, osWaitForever);
-  char* ip = "10.2.25.94";
+  char* ip = "10.2.25.98";
   char* port = "1234";
   uint32_t max_topics = 15;
 
@@ -194,8 +216,10 @@ void tcpSessionTask(void *argument)
   uxrUDPTransport transport;
   if (!uxr_init_udp_transport(&transport, UXR_IPv4, ip, port))
   {
-      printf("Error at create transport.\n");
-      // return 1;
+      while (1) {
+        /* code */
+      }
+      
   }
 
   // Session
@@ -203,7 +227,11 @@ void tcpSessionTask(void *argument)
   uxr_init_session(&session, &transport.comm, 0xAAAABBBB);
   if (!uxr_create_session(&session))
   {
-      printf("Error at create session.\n");
+      // printf("Error at create session.\n");
+      while (1) {
+        /* code */
+      }
+      
       // return 1;
   }
 
@@ -279,8 +307,9 @@ void tcpSessionTask(void *argument)
       uxr_prepare_output_stream(&session, reliable_out, datawriter_id, &ub, topic_size);
       HelloWorld_serialize_topic(&ub, &topic);
 
-      printf("Send topic: %s, id: %li\n", topic.message, topic.index);
+      // printf("Send topic: %s, id: %li\n", topic.message, topic.index);
       connected = uxr_run_session_time(&session, 1000);
+      osDelay(1000);
   }
 
   // Delete resources

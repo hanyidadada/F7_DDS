@@ -52,7 +52,9 @@
         "netif.h": "c",
         "dhcp.h": "c",
         "etharp.h": "c",
-        "mem.h": "c"
+        "mem.h": "c",
+        "session.h": "c",
+        "serialtransport.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled",
     "c-cpp-flylint.flexelint.enable": false,
