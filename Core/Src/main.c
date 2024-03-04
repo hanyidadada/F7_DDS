@@ -107,17 +107,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USART1_UART_Init();
   MX_RTC_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
-
-  while (1) {
-    HAL_UART_Transmit(&huart1, "Hello World\n", 12, 1000);
-    HAL_Delay(1000);
-  }
-  
-
   /* USER CODE END 2 */
 
   /* Init scheduler */

@@ -1,8 +1,9 @@
 #include <uxr/client/transport.h>
 
 #include "main.h"
+#include "usart.h"
 #include "cmsis_os.h"
-#include "uxr_transport.h"
+#include "serialtransport.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,7 +22,6 @@ int fifo_bot = 0; //队底指针
 int fifo_size = 0;//队长度
 int recv_flag = 0;
 int rx_len = 0;
-int sendflag = 0;
 
 int fifo_in(uint8_t * Addr,int len){
     int i;
@@ -53,25 +53,24 @@ int is_fifo_empty(){
     return fifo_size == 0;
 }
 
-bool my_custom_transport_open(uxrCustomTransport * transport){
-    UART_HandleTypeDef * uart = (UART_HandleTypeDef*) transport->args;
-    HAL_UART_Receive_DMA(uart, recv_buffer, UART_DMA_BUFFER_SIZE);
+bool serial_transport_open(uxrCustomTransport * transport){
+    UNUSED(transport);
+    HAL_UART_Receive_DMA(&huart1, recv_buffer, UART_DMA_BUFFER_SIZE);
     return true;
 }
 
-bool my_custom_transport_close(uxrCustomTransport * transport){
-    UART_HandleTypeDef * uart = (UART_HandleTypeDef*) transport->args;
-    HAL_UART_DMAStop(uart);
+bool serial_transport_close(uxrCustomTransport * transport){
+    UNUSED(transport);
+    HAL_UART_DMAStop(&huart1);
     return true;
 }
 
-size_t my_custom_transport_write(uxrCustomTransport* transport, uint8_t * buf, size_t len, uint8_t * err){
-    UART_HandleTypeDef * uart = (UART_HandleTypeDef*) transport->args;
-
-    HAL_StatusTypeDef ret;
-    if (uart->gState == HAL_UART_STATE_READY) {
-        ret = HAL_UART_Transmit(uart, buf, len, 100);
-        while (ret == HAL_OK && uart->gState != HAL_UART_STATE_READY) {
+size_t serial_transport_write(uxrCustomTransport* transport, uint8_t * buf, size_t len, uint8_t * err){
+    UNUSED(transport);
+    HAL_StatusTypeDef ret = HAL_OK;
+    if (huart1.gState == HAL_UART_STATE_READY) {
+        ret = HAL_UART_Transmit(&huart1, buf, len, 1000);
+        while (ret == HAL_OK && huart1.gState != HAL_UART_STATE_READY) {
             // osDelay(1);
         }
         
@@ -81,8 +80,8 @@ size_t my_custom_transport_write(uxrCustomTransport* transport, uint8_t * buf, s
     }
 }
 
-size_t my_custom_transport_read(uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err){
-    UART_HandleTypeDef * uart = (UART_HandleTypeDef*) transport->args;
+size_t serial_transport_read(uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err){
+    UNUSED(transport);
     int wrote = 0;
     uint32_t start_time = uxr_millis();
     uint32_t end_time;
@@ -111,18 +110,6 @@ void HAL_UART_IDLECallback(UART_HandleTypeDef *huart){
             }
             HAL_UART_Receive_DMA(huart, recv_buffer, 2048);
         }
-    }
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-    if(huart->Instance == USART1){
-        // sendflag = 1;
-        // __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_TXE);
-        // if (__HAL_UART_GET_FLAG(huart, UART_FLAG_TC) != RESET) {
-        //     __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_TC);
-        //     huart->gState = HAL_UART_STATE_READY;
-        //     HAL_GPIO_TogglePin(LD_USER2_GPIO_Port, LD_USER2_Pin);
-        // }
     }
 }
 

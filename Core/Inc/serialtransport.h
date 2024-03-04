@@ -18,9 +18,9 @@
 
 // #define RMW_UXRCE_TRANSPORT_CUSTOM_USB
 
-bool my_custom_transport_open(struct uxrCustomTransport * transport);
-bool my_custom_transport_close(struct uxrCustomTransport * transport);
-size_t my_custom_transport_write(struct uxrCustomTransport* transport, uint8_t * buf, size_t len, uint8_t * err);
-size_t my_custom_transport_read(struct uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err);
+bool serial_transport_open(struct uxrCustomTransport * transport);
+bool serial_transport_close(struct uxrCustomTransport * transport);
+size_t serial_transport_write(struct uxrCustomTransport* transport, uint8_t * buf, size_t len, uint8_t * err);
+size_t serial_transport_read(struct uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err);
 void HAL_UART_IDLECallback(UART_HandleTypeDef *huart);
 #endif /* INC_UXR_TRANSPORT_H_ */
