@@ -33,6 +33,37 @@ const char* datawriter_xml = "<dds>"
         "</data_writer>"
         "</dds>";
 
+const char* datareader_xml = "<dds>"
+            "<data_reader>"
+            "<topic>"
+            "<kind>NO_KEY</kind>"
+            "<name>HelloWorldTopic</name>"
+            "<dataType>HelloWorld</dataType>"
+            "</topic>"
+            "</data_reader>"
+            "</dds>";
+
+void on_topic(
+        uxrSession* session,
+        uxrObjectId object_id,
+        uint16_t request_id,
+        uxrStreamId stream_id,
+        struct ucdrBuffer* ub,
+        uint16_t length,
+        void* args)
+{
+    (void) session; (void) object_id; (void) request_id; (void) stream_id; (void) length;
+    // if(request_id != pubreqid) {
+    //     return;
+    // }
+    HelloWorld topic;
+    // uint32_t index = Clock_getTicks();
+    HelloWorld_deserialize_topic(ub, &topic);
+    HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+    // uart_printf("delay: %d\n",index - topic.index);
+
+}
+
 int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
 {
     
@@ -49,6 +80,7 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
         return -1;
     }
     uxr_init_session(&(info->session), &(info->transport.comm), 0xAAAABBCC);
+    uxr_set_topic_callback(&(info->session), on_topic, NULL);
     if (!uxr_create_session(&(info->session)))
     {
         printf("open session error!\n");
@@ -79,12 +111,23 @@ int usart_session_open(session_info_t *info,UART_HandleTypeDef huart)
 
     uint16_t datawriter_req = uxr_buffer_create_datawriter_xml(&(info->session), info->reliable_out, info->datawriter_id, info->publisher_id, datawriter_xml, UXR_REPLACE);
 
+    info->subscriber_id = uxr_object_id(0x01, UXR_SUBSCRIBER_ID);
+    const char* subscriber_xml = "";
+    uint16_t subscriber_req = uxr_buffer_create_subscriber_xml(&(info->session), info->reliable_out, info->subscriber_id , info->participant_id,
+                    subscriber_xml, UXR_REUSE);
+
+    info->datareader_id = uxr_object_id(0x01, UXR_DATAREADER_ID);
+    
+    uint16_t datareader_req = uxr_buffer_create_datareader_xml(&(info->session), info->reliable_out, info->datareader_id, info->subscriber_id,
+                    datareader_xml, UXR_REUSE);
+
+
     // Send create entities message and wait its status
-    uint8_t status[4];
-    uint16_t requests[4] = {
-        participant_req, topic_req, publisher_req, datawriter_req
+    uint8_t status[6];
+    uint16_t requests[6] = {
+        participant_req, topic_req, publisher_req, datawriter_req, subscriber_req, datareader_req
     };
-    if (!uxr_run_session_until_all_status(&(info->session), 1000, requests, status, 4))
+    if (!uxr_run_session_until_all_status(&(info->session), 1000, requests, status, 6))
     {
         printf("Error at create entities: participant: %i topic: %i publisher: %i darawriter: %i\n", status[0],
                 status[1], status[2], status[3]);

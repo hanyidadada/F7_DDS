@@ -189,16 +189,26 @@ void uartSessionTask(void *argument)
   /* Infinite loop */
   while (count < 20)
   {
-    HelloWorld topic = {
-        ++count, "Hello DDS world!"};
+    HelloWorld topic;
+    if(count % 2 == 0) {
+      topic.index = count++;
+      memset(topic.message, 0, 255);
+      memcpy(topic.message, "LED_ON", 7);
+    } else {
+      topic.index = count++;
+      memset(topic.message, 0, 255);
+      memcpy(topic.message, "LED_OFF", 7);
+    }
+    
 
     ucdrBuffer ub;
     uint32_t topic_size = HelloWorld_size_of_topic(&topic, 0);
     uxr_prepare_output_stream(&(info.session), info.reliable_out, info.datawriter_id, &ub, topic_size);
     HelloWorld_serialize_topic(&ub, &topic);
     if(!uxr_run_session_time(&(info.session), 1000)){
-      HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
+      // HAL_GPIO_TogglePin(LD_USER1_GPIO_Port, LD_USER1_Pin);
     }
+    vTaskDelay(1000);
   }
   // Delete resources
   uxr_delete_session(&(info.session));
