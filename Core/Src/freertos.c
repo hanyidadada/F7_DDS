@@ -164,10 +164,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   osSemaphoreRelease(usartsemaphoreHandle);
   // uartSessionTask(NULL);
-  while (1)
-  {
-    osDelay(100000);
-  }
+  osThreadExit();
   
   /* USER CODE END StartDefaultTask */
 }
@@ -318,6 +315,7 @@ void udpSessionTask(void *argument)
   // Delete resources
   uxr_delete_session(&session);
   uxr_close_udp_transport(&transport);
+  osThreadExit();
 }
 /* USER CODE END Application */
 
