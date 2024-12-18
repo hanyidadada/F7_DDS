@@ -13,7 +13,7 @@
             "runToEntryPoint": "main",
             "servertype": "openocd",
             "configFiles": [
-                "interface/stlink-v2-1.cfg", // connector of your usb, config file at /usr/share/openocd/scripts
+                "interface/stlink.cfg", // connector of your usb, config file at /usr/share/openocd/scripts
                 "target/stm32f7x.cfg" // mcu of your board
             ],
             "armToolchainPath": "/opt/arm-gnu-toolchain/bin", // armToolChain path
