@@ -74,11 +74,12 @@ const osThreadAttr_t udpSessionTask_attributes = {
     .stack_size = sizeof(udpTaskBuffer),
 };
 
-osSemaphoreId_t semaphoreHandle;
+osSemaphoreId_t usartsemaphoreHandle;
+osSemaphoreId_t udpsemaphoreHandle;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 256 ];
+uint32_t defaultTaskBuffer[ 2048 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
@@ -118,7 +119,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  semaphoreHandle = osSemaphoreNew(2, 0, NULL);
+  usartsemaphoreHandle = osSemaphoreNew(1, 0, NULL);
+  udpsemaphoreHandle = osSemaphoreNew(1, 0, NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -136,7 +138,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   uartSessionTaskHandle = osThreadNew(uartSessionTask, NULL, &uartSessionTask_attributes);
-  // udpSessionTaskHandle = osThreadNew(udpSessionTask, NULL, &udpSessionTask_attributes);
+  udpSessionTaskHandle = osThreadNew(udpSessionTask, NULL, &udpSessionTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -160,9 +162,8 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
-  osSemaphoreRelease(semaphoreHandle);
+  osSemaphoreRelease(usartsemaphoreHandle);
   // uartSessionTask(NULL);
-  osSemaphoreRelease(semaphoreHandle);
   while (1)
   {
     osDelay(100000);
@@ -175,7 +176,7 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 void uartSessionTask(void *argument)
 {
-  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
+  osSemaphoreAcquire(usartsemaphoreHandle, osWaitForever);
   // osThreadTerminate(defaultTaskHandle);
   session_info_t info;
   if (usart_session_open(&info, huart1) < 0)
@@ -187,7 +188,7 @@ void uartSessionTask(void *argument)
   // Write topics
   uint32_t count = 0;
   /* Infinite loop */
-  while (count < 20)
+  while (count < 10)
   {
     HelloWorld topic = {
         ++count, "Hello DDS world!"};
@@ -203,14 +204,16 @@ void uartSessionTask(void *argument)
   // Delete resources
   uxr_delete_session(&(info.session));
   uxr_close_custom_transport(&(info.transport));
+  osSemaphoreRelease(udpsemaphoreHandle);
+  osThreadExit();
 }
 
 void udpSessionTask(void *argument)
 {
-  osSemaphoreAcquire(semaphoreHandle, osWaitForever);
-  char* ip = "10.2.25.98";
+  osSemaphoreAcquire(udpsemaphoreHandle, osWaitForever);
+  char* ip = "192.168.1.3";
   char* port = "1234";
-  uint32_t max_topics = 15;
+  uint32_t max_topics = 10;
 
   // Transport
   uxrUDPTransport transport;
